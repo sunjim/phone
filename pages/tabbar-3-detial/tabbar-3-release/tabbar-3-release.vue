@@ -7,7 +7,7 @@
 				<movable-view @tap="bakcgrounImgTap" direction="all" out-of-bounds class="bg-img" inertia>手机背景图片</movable-view>
 				<movable-view 
 					v-for="(item, itemIndex) in viewList" 
-					@touchend="onChange"
+					@change="onChange"
 					:key="itemIndex" 
 					@tap="tap(item,itemIndex,this)" 
 					v-bind:class="[item.isActive ? 'activeClass' : '', item.defaultClass]" 
@@ -19,7 +19,7 @@
 					:scale-value="item.scale"   
 					direction="all" 
 					out-of-bounds inertia>
-					<cover-image v-if="item.type=='img'" :src="item.src" @error="imageError" @tap.stop="chooseImage"></cover-image>
+					<cover-image v-if="item.type=='img'" :src="item.src" @error="imageError" @tap.stop="chooseImage(itemIndex)"></cover-image>
 					<text class="singer" v-if="item.content" @tap.stop="tapText(item)">{{item.content}}</text>
 				</movable-view>
 			</movable-area>
@@ -120,29 +120,35 @@ import uniPopup from "@/components/uni-popup.vue"
 				savedFilePath: ''
 			}
 		},
-
-		onLoad(){
+		onHide(){
+			uni.setStorageSync('viewList',this.viewList);
+		},
+		onShow(){
+			let that = this;
 			uni.getStorage({
 				key: 'viewList',
 				success: function (res) {
-					this.viewList = res.data;
+					that.viewList = res.data;
+				},
+				fail:function(res){
+					
 				}
 			});
-			//this.viewList = uni.getStorageSync('viewList');
-			//this.savedFilePath = uni.getStorageSync('savedFilePath');
+		},
+		onLoad(){
 			this.screenSize.width = uni.getSystemInfoSync().screenWidth;
 			this.screenSize.height = uni.getSystemInfoSync().screenHeight-65;
 		},
 		methods: {
-			chooseImage() {
-				//console.log(typeof(this.viewList));
-				//return;
-				uni.setStorageSync('viewList',this.viewList);
+			chooseImage(v) {
+				let that = this;
 				uni.chooseImage({
 					count: 1,
 					success: (res) => {
-						console.log(res.tempFilePaths[0]);
-						this.tempFilePath = res.tempFilePaths[0];
+						that.tempFilePath = res.tempFilePaths[0];
+						//console.log(that.viewList[v]);
+						//that.viewList[v].src = res.tempFilePaths[0];
+						
 					}
 				});
 			},
@@ -211,10 +217,11 @@ import uniPopup from "@/components/uni-popup.vue"
 			},
 			onChange: function(e) {
 				let that = this;
+				
 				setTimeout(function(){
 					that.old.x = e.detail.x
 					that.old.y = e.detail.y
-				},300);
+				},3000);
 
 			},
 		}
